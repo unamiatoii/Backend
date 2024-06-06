@@ -4,7 +4,8 @@
   "description": "Backend with express",
   "main": "server.js",
   "scripts": {
-    "test": "npm start"
+    "start": "node server.js",
+    "build": "npm install"
   },
   "author": "unamiatoiii",
   "license": "ISC",

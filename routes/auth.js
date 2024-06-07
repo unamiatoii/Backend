@@ -1,9 +1,9 @@
-// backend/routes/auth.js
-
 const express = require('express');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const User = require('../models/User');
+const RevokedToken = require('../models/RevokedToken');
+const auth = require('../middleware/auth');
 const { sendEmail } = require('../utils/mailer');
 const router = express.Router();
 
@@ -29,6 +29,22 @@ router.post('/login', async (req, res) => {
     }
     const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '1h' });
     res.json({ token });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// Logout
+router.post('/logout', auth, async (req, res) => {
+  try {
+    const token = req.header('Authorization').replace('Bearer ', '');
+    const decoded = jwt.decode(token);
+    const expiresAt = new Date(decoded.exp * 1000); // Convert expiry time to milliseconds
+
+    const revokedToken = new RevokedToken({ token, expiresAt });
+    await revokedToken.save();
+
+    res.status(200).json({ message: 'Logout successful. Token has been revoked.' });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }

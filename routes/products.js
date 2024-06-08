@@ -1,9 +1,23 @@
 // backend/routes/products.js
 const express = require('express');
 const router = express.Router();
+const multer = require('multer');
+const path = require('path');
 const Product = require('../models/Product');
 
-//Recuperer tous les produits
+// Configurer multer pour sauvegarder les fichiers
+const storage = multer.diskStorage({
+  destination: function(req, file, cb) {
+    cb(null, 'uploads/');
+  },
+  filename: function(req, file, cb) {
+    cb(null, Date.now() + path.extname(file.originalname)); // Ajouter un timestamp pour éviter les collisions de noms
+  }
+});
+
+const upload = multer({ storage: storage });
+
+// Récupérer tous les produits
 router.get('/', async (req, res) => {
   try {
     const products = await Product.find();
@@ -14,13 +28,13 @@ router.get('/', async (req, res) => {
 });
 
 // Créer un produit
-router.post('/', async (req, res) => {
+router.post('/', upload.single('image'), async (req, res) => {
   const product = new Product({
     nom: req.body.nom,
     description: req.body.description,
     prix: req.body.prix,
     categorie: req.body.categorie,
-    imageUrl: req.body.imageUrl,
+    imageUrl: req.file ? `/uploads/${req.file.filename}` : ''
   });
 
   try {
@@ -31,8 +45,8 @@ router.post('/', async (req, res) => {
   }
 });
 
-//Mettre a jour un produit
-router.put('/:id', async (req, res) => {
+// Mettre à jour un produit
+router.put('/:id', upload.single('image'), async (req, res) => {
   try {
     const product = await Product.findById(req.params.id);
     if (!product) {
@@ -43,7 +57,9 @@ router.put('/:id', async (req, res) => {
     product.description = req.body.description || product.description;
     product.prix = req.body.prix || product.prix;
     product.categorie = req.body.categorie || product.categorie;
-    product.imageUrl = req.body.imageUrl || product.imageUrl;
+    if (req.file) {
+      product.imageUrl = `/uploads/${req.file.filename}`;
+    }
 
     const updatedProduct = await product.save();
     res.json(updatedProduct);
@@ -52,7 +68,7 @@ router.put('/:id', async (req, res) => {
   }
 });
 
-//Supprimer un produit
+// Supprimer un produit
 router.delete('/:id', async (req, res) => {
   try {
     const product = await Product.findById(req.params.id);

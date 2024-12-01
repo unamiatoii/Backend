@@ -13,7 +13,7 @@ const app = express();
 app.use(cors());
 app.use(bodyParser.json());
 
-// Connect to MongoDB Atlas
+// Connect to MongoDB AtlasACA
 const mongoURI = process.env.MONGODB_URI;
 mongoose.connect(mongoURI);
 
@@ -31,9 +31,12 @@ app.get('/', (req, res) => {
 const productRoutes = require('./routes/products');
 const authRoutes = require('./routes/auth');
 const orderRoutes = require('./routes/orders');
+const usersRouter = require('./routes/users');
 app.use('/api/products', productRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/commandes', orderRoutes);
+app.use('/api/users', usersRouter);
+
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
